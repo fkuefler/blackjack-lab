@@ -6,8 +6,8 @@
 
 enum class Rank
 {
-	Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten,
-	Jack, Queen, King, Ace
+	Ace = 1, Two, Three, Four, Five, Six, Seven, Eight, Nine, Ten,
+	Jack, Queen, King
 };
 
 enum class Suit
