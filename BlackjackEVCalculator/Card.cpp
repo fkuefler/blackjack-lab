@@ -28,7 +28,7 @@ int Card::getValue() const {
 
 // Returns a string representation of the card
 std::string Card::toString() const {
-	std::string rankStr;
+	std::string rankStr; // Rank component of string
 	switch (rank) {
 	case Rank::Two: rankStr = "2"; break;
 	case Rank::Three: rankStr = "3"; break;
@@ -46,24 +46,24 @@ std::string Card::toString() const {
 	default: rankStr = "?"; break;
 	}
 
-	std::string suitStr;
+	std::string suitStr; // Suit component of string
 	switch (suit) {
-	case Suit::Clubs: suitStr = "C"; break;
-	case Suit::Diamonds: suitStr = "D"; break;
-	case Suit::Hearts: suitStr = "H"; break;
-	case Suit::Spades: suitStr = "S"; break;
+	case Suit::Clubs: suitStr = "c"; break;
+	case Suit::Diamonds: suitStr = "d"; break;
+	case Suit::Hearts: suitStr = "h"; break;
+	case Suit::Spades: suitStr = "s"; break;
 	default: suitStr = "?"; break;
 	}
 
 	return rankStr + suitStr;
 }
 
-// Operator Overload Definition: operator==
+// Operator Overload Definition: operator ==
 bool Card::operator==(const Card& other) const {
 	return (rank == other.rank && suit == other.suit);
 }
 
-// Operator Overload Definition: operator!=
+// Operator Overload Definition: operator !=
 bool Card::operator!=(const Card& other) const {
 	return !(*this == other);
 }
