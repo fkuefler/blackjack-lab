@@ -3,6 +3,9 @@
 #include <string>
 #include <stdexcept>
 
+// Default constructor
+Card::Card() : rank(Rank::Ace), suit(Suit::Hearts) {}
+
 // Constructor for new Card object
 Card::Card(Rank r, Suit s) : rank(r), suit(s) {}
 

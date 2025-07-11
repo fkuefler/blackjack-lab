@@ -20,6 +20,7 @@ public:
 	Rank rank;
 	Suit suit;
 
+	Card();
 	Card(Rank r, Suit s);
 
 	int getValue() const;
