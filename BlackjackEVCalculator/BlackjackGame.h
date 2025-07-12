@@ -14,6 +14,7 @@
 struct GameState {
 	Hand playerHand;
 	Card dealerUpcard;
+	Hand dealerHand;
 
 	std::map<Rank, int> remainingCardCounts;
 	int totalCardsRemaining;
@@ -46,6 +47,10 @@ private:
 	double calculatePayout(int playerHandScore, int dealerHandScore,
 		bool isPlayerBlackjack, bool isDealerBlackjack,
 		bool isDoubledDown = false) const;
+
+	GameState getGameStateMinusCardToDealer(const GameState& oldState, Rank rankToDealer) const;
+
+	double calcProbOfDealerX(const GameState& state, int x, double totalProb) const;
 
 public:
 	BlackjackGame(int decks = 6, bool h17 = true, double bjPayout = 1.5,

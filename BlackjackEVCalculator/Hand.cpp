@@ -36,6 +36,34 @@ int Hand::getValue() const {
 	return score;
 }
 
+// Calculate the total value of the hand, but always treat soft 17s as 7
+// Used for calculations where dealer needs to hit on soft 17
+int Hand::getValueSoft17As7() const {
+	int score = 0;
+	int numAces = 0;
+
+	// First pass: Sum card values using Ace as default 11
+	for (const auto& card : cards) {
+		if (card.rank == Rank::Ace) {
+			numAces++; // Count no. of aces in hand
+		}
+		score += card.getValue();
+	}
+
+	// Second pass: Adjust aces from 11 to 1 if needed
+	while (score > 21 && numAces > 0) {
+		score -= 10;
+		numAces--;
+	}
+
+	// If soft 17, change to 7
+	if (numAces == 1 && score == 17) {
+		return 7;
+	}
+
+	return score;
+}
+
 // Checks if hand has an ace that can be counted as 11 without busting
 bool Hand::isSoft() const {
 	bool hasAce = false;
