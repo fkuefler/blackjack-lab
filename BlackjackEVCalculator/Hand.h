@@ -19,10 +19,6 @@ public:
 	// Calculate the total value of the hand
 	int getValue() const;
 
-	// Calculate the total value of the hand, but always treat soft 17s as 7
-	// Used for calculations where dealer needs to hit on soft 17
-	int getValueSoft17As7() const;
-
 	// Checks if hand contains an Ace currently counted as 11
 	bool isSoft() const;
 

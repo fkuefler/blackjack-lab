@@ -51,6 +51,7 @@ double BlackjackGame::calculatePayout(int playerHandScore, int dealerHandScore,
 	return basePayout;
 }
 
+// Converts the remainingCardCounts map to an array
 DeckCounts BlackjackGame::convertMapToDeckCount(const std::map<Rank, int>& remainingCardCounts) {
 	DeckCounts arrayCounts = {};
 
@@ -77,48 +78,9 @@ GameState BlackjackGame::getGameStateMinusCardToDealer(const GameState& oldState
 	newState.totalCardsRemaining = oldState.totalCardsRemaining - 1;
 	newState.remainingCardCounts = oldState.remainingCardCounts;
 	newState.remainingCardCounts[rankToDealer]--; // Decrement the count for the rank of the card we just removed from the shoe
+	newState.dealerChecked = false; // This method only runs once the dealer has atleast two cards--they will never check their next card
 	return newState;
 }
-
-/*
-* double BlackjackGame::calcProbOfDealerX(const GameState& state, int x, bool nextCardCanBeAce) const {
-	double totalProb = 0.0;
-	// If dealer hits soft 17s, different getValue method is used to treat soft 17s as 7
-	if (dealerHitsSoft17) {
-		if (state.dealerHand.getValueSoft17As7() == x) {
-			return 1.0;
-		}
-		else if (state.dealerHand.getValueSoft17As7() > x) {
-			return 0.0;
-		}
-		for (const auto& pair : state.remainingCardCounts) {
-			if (!nextCardCanBeAce && pair.first == Rank::Ace) {
-				continue;
-			}
-			double rankProb = static_cast<double>(pair.second) / state.totalCardsRemaining;
-			totalProb += (rankProb * calcProbOfDealerX(getGameStateMinusCardToDealer(state, pair.first), x, true));
-		}
-	}
-	// If dealer stands soft 17s, standard getValue method is used
-	else {
-		if (state.dealerHand.getValue() == x) {
-			return 1.0;
-		}
-		else if (state.dealerHand.getValue() > x) {
-			return 0.0;
-		}
-		for (const auto& pair : state.remainingCardCounts) {
-			if (!nextCardCanBeAce && pair.first == Rank::Ace) {
-				continue;
-			}
-			double rankProb = static_cast<double>(pair.second) / state.totalCardsRemaining;
-			totalProb += (rankProb * calcProbOfDealerX(getGameStateMinusCardToDealer(state, pair.first), x, true));
-		}
-	}
-	return totalProb;
-}
-*/
-
 
 BlackjackGame::BlackjackGame(int decks, bool h17, double bjPayout, bool das, bool surrender, bool splitAces)
 	: numDecks(decks),
@@ -138,7 +100,7 @@ GameState BlackjackGame::getGameState(const Hand& playerHand, const Card& dealer
 	state.dealerHand.addCard(dealerUpcard);
 	state.remainingCardCounts = currentDeck.getRemainingCardCounts();
 	state.totalCardsRemaining = currentDeck.getRemainingCardsCount();
-	state.dealerCheckedForBJ = dealerCheckedForBJ;
+	state.dealerChecked = dealerCheckedForBJ;
 }
 
 double BlackjackGame::calculateEVForHit(const GameState& state) const {
@@ -163,11 +125,14 @@ double BlackjackGame::calculateEVForSurrender(const GameState& state) const {
 	return canSurrender ? -0.5 : std::nan("");
 }
 
-// Add insurance EV calc
+// NOTE: Add insurance EV calc
 
+// NOTE: Add optimal strategy EV calc
+
+// Calculates the probability of each dealer outcome
 DealerOutcomeProbabilities BlackjackGame::calcDealerOutcomeProbs(
 	const GameState& state, std::map<DealerMemoKey, DealerOutcomeProbabilities>& memo) {
-	
+	// Key used for memo
 	DealerMemoKey key(state.dealerHand.getValue(), state.dealerHand.isSoft(), convertMapToDeckCount(state.remainingCardCounts));
 
 	if (memo.count(key)) {
@@ -176,18 +141,22 @@ DealerOutcomeProbabilities BlackjackGame::calcDealerOutcomeProbs(
 
 	DealerOutcomeProbabilities outcomes;
 
+	// If dealer busted
 	if (state.dealerHand.getValue() > 21) {
 		outcomes.prob_bust = 1.0;
 		memo[key] = outcomes;
 		return outcomes;
 	}
 
-	if (state.dealerHand.getValue() >= 17) {
-		// If hard 17 or soft 17 but dealer stands soft 17s
-		if (state.dealerHand.getValue() == 17 && (!state.dealerHand.isSoft() || (state.dealerHand.isSoft() && !dealerHitsSoft17))) {
-			outcomes.prob_17 = 1.0;
-		}
-		else if (state.dealerHand.getValue() == 18) {
+	// If dealer has hard 17 or soft 17 with dealer standing soft 17s
+	if (state.dealerHand.getValue() == 17 && (!state.dealerHand.isSoft() || (state.dealerHand.isSoft() && !dealerHitsSoft17))) {
+		outcomes.prob_17 = 1.0;
+		memo[key] = outcomes;
+		return outcomes;
+	}
+	// If dealer has 18-21
+	else if (state.dealerHand.getValue() >= 18) {
+		if (state.dealerHand.getValue() == 18) {
 			outcomes.prob_18 = 1.0;
 		}
 		else if (state.dealerHand.getValue() == 19) {
@@ -197,40 +166,67 @@ DealerOutcomeProbabilities BlackjackGame::calcDealerOutcomeProbs(
 			outcomes.prob_20 = 1.0;
 		}
 		else if (state.dealerHand.getValue() == 21) {
-			outcomes.prob_21 = 1.0;
+			if (state.dealerHand.isBlackjack()) {
+				outcomes.prob_blackjack = 1.0;
+			}
+			else {
+				outcomes.prob_21 = 1.0;
+			}
 		}
 		memo[key] = outcomes;
 		return outcomes;
 	}
 
+	// Iterate through all ranks for the next possible card
+	for (const auto& pair : state.remainingCardCounts) {
+		if (pair.second > 0) {
 
-	/*
-	*     // Iterate through all possible card ranks the dealer could draw
-    FOR EACH rank, count IN currentState.REMAINING_CARD_COUNTS DO
-        IF count > 0 THEN
-            probDrawCard = (DOUBLE)count / totalRemainingCards
+			double probDrawCard;
+			// If we know dealer checked for blackjack and doesn't have it, this gives additional information about the next card
+			if (state.dealerChecked) {
+				if (state.dealerUpcard.rank == Rank::Ten) {
+					// If upcard is ten and no blackjack, next card can't be an ace, so skip it.
+					if (pair.first == Rank::Ace) {
+						continue;
+					}
+					// We know next card can't be an ace, so subtract the number of aces from the number of available cards
+					probDrawCard = static_cast<double>(pair.second) / state.totalCardsRemaining - state.remainingCardCounts.at(Rank::Ace);
+				}
+				else if (state.dealerUpcard.rank == Rank::Ace) {
+					// If upcard is ace and no blackjack, next card can't be an ten, so skip it.
+					if (pair.first == Rank::Ten) {
+						continue;
+					}
+					// We know next card can't be an ten, so subtract the number of tens from the number of available cards
+					probDrawCard = static_cast<double>(pair.second) / state.totalCardsRemaining - state.remainingCardCounts.at(Rank::Ten);
+				}
+				else {
+					probDrawCard = static_cast<double>(pair.second) / state.totalCardsRemaining;
+				}
+			}
+			else {
+				// Dealer hasn't checked
+				probDrawCard = static_cast<double>(pair.second) / state.totalCardsRemaining;
+			}
 
-            // Create the next GameState after drawing this card
-            nextState = getGameStateMinusCardToDealer(currentState, rank) // Assumes this function exists
+			// Get new GameState for after card is dealt
+			GameState newState = getGameStateMinusCardToDealer(state, pair.first);
 
-            // Recursive call for the next state
-            subOutcomes = calcProbOfDealerOutcomes(nextState, rules, memo)
+			// Recursively call this method with the new GameState
+			DealerOutcomeProbabilities subOutcomes = calcDealerOutcomeProbs(newState, memo);
 
-            // Combine results: weighted average
-            outcomes.PROB_17 += probDrawCard * subOutcomes.PROB_17
-            outcomes.PROB_18 += probDrawCard * subOutcomes.PROB_18
-            outcomes.PROB_19 += probDrawCard * subOutcomes.PROB_19
-            outcomes.PROB_20 += probDrawCard * subOutcomes.PROB_20
-            outcomes.PROB_21 += probDrawCard * subOutcomes.PROB_21
-            outcomes.PROB_BUST += probDrawCard * subOutcomes.PROB_BUST
-        END IF
-    END FOR
-
-    // 5. Store and Return
-    memo[currentMemoKey] = outcomes
-    RETURN outcomes
-	*/
-
+			outcomes.prob_17 += probDrawCard * subOutcomes.prob_17;
+			outcomes.prob_18 += probDrawCard * subOutcomes.prob_18;
+			outcomes.prob_19 += probDrawCard * subOutcomes.prob_19;
+			outcomes.prob_20 += probDrawCard * subOutcomes.prob_20;
+			outcomes.prob_21 += probDrawCard * subOutcomes.prob_21;
+			outcomes.prob_bust += probDrawCard * subOutcomes.prob_bust;
+			outcomes.prob_blackjack += probDrawCard * subOutcomes.prob_blackjack;
+		}
+	}
+	// Add situation to memo and return outcomes
+	memo[key] = outcomes;
+	return outcomes;
 }
 
 std::string BlackjackGame::getRuleDescription() const {

@@ -19,7 +19,7 @@ struct GameState {
 	std::map<Rank, int> remainingCardCounts;
 	int totalCardsRemaining;
 	int originalNumDecks;
-	bool dealerCheckedForBJ;
+	bool dealerChecked;
 };
 
 enum class PlayerAction {
