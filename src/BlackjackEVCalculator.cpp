@@ -1,20 +1,36 @@
-// BlackjackEVCalculator.cpp : This file contains the 'main' function. Program execution begins and ends there.
+// BlackjackEVCalculator.cpp : This file contains the 'main' function. Program
+// execution begins and ends there.
 //
 
 #include <iostream>
 
-int main()
-{
-    std::cout << "Hello World!\n";
+#include "../include/BlackjackGame.h"
+
+int main() {
+  Deck testDeck = Deck(6);
+  Card p1 = Card(Rank::Ten, Suit::Spades);
+  Card p2 = Card(Rank::Ace, Suit::Hearts);
+  Card d1 = Card(Rank::Nine, Suit::Clubs);
+
+  // Remove the dealt cards from the deck to ensure correct remaining card
+  // counts
+  testDeck.dealCard(p1);
+  testDeck.dealCard(p2);
+  testDeck.dealCard(d1);
+
+  Hand playerHand = Hand();
+  playerHand.addCard(p1);
+  playerHand.addCard(p2);
+
+  BlackjackGame game = BlackjackGame();
+  GameState state = game.getGameState(playerHand, d1, testDeck, true);
+  double standEV = game.calculateEVForStand(state);
+  std::string dealerOutcomes = game.getDealerOutcomesAsString(state);
+
+  std::cout << "Player has 21 vs Dealer Nine" << std::endl;
+  std::cout << "EV for standing: " << standEV << std::endl;
+  std::cout << "Dealer Outcomes: " << std::endl;
+  std::cout << dealerOutcomes << std::endl;
+
+  return 0;
 }
-
-// Run program: Ctrl + F5 or Debug > Start Without Debugging menu
-// Debug program: F5 or Debug > Start Debugging menu
-
-// Tips for Getting Started: 
-//   1. Use the Solution Explorer window to add/manage files
-//   2. Use the Team Explorer window to connect to source control
-//   3. Use the Output window to see build output and other messages
-//   4. Use the Error List window to view errors
-//   5. Go to Project > Add New Item to create new code files, or Project > Add Existing Item to add existing code files to the project
-//   6. In the future, to open this project again, go to File > Open > Project and select the .sln file
