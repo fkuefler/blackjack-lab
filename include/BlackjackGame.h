@@ -20,9 +20,12 @@ struct GameState {
   int totalCardsRemaining;
   int originalNumDecks;
   bool dealerChecked;
+  bool wasSplit = false;
 };
 
 enum class PlayerAction { Hit, Stand, Split, Double, Surrender };
+
+enum class SurrenderType { None, Late, Early };
 
 struct DealerOutcomeProbabilities {
   double prob_17 = 0.0;
@@ -57,7 +60,7 @@ class BlackjackGame {
   double blackjackPayout;
   double insurancePayout;
   bool canDoubleAfterSplit;
-  bool canSurrender;
+  SurrenderType surrenderType;
   bool canSplitAces;
 
   double calculatePayout(int playerHandScore, int dealerHandScore,
@@ -65,7 +68,7 @@ class BlackjackGame {
                          bool isDoubledDown = false) const;
 
   DeckCounts convertMapToDeckCount(
-      const std::map<Rank, int>& remainingCardCounts);
+      const std::map<Rank, int>& remainingCardCounts) const;
 
   GameState getGameStateMinusCardToDealer(const GameState& oldState,
                                           Rank rankToDealer) const;
@@ -73,25 +76,31 @@ class BlackjackGame {
   GameState getGameStateMinusCardToPlayer(const GameState& oldState,
                                           Rank rankToPlayer) const;
 
+  GameState getGameStateAfterSplit(const GameState& oldState,
+                                   Card cardToKeep) const;
+
   double getCardDrawProbability(const GameState& state, Rank cardRank) const;
 
  public:
   BlackjackGame(int decks = 6, bool h17 = true, double bjPayout = 1.5,
-                bool das = true, bool surrender = true, bool splitAces = false);
+                bool das = true, SurrenderType surrender = SurrenderType::Late,
+                bool splitAces = false);
 
   GameState getGameState(const Hand& playerHand, const Card& dealerUpcard,
                          const Deck& currentDeck,
                          const bool dealerCheckedForBJ) const;
 
   double calculateEVForHit(const GameState& state) const;
-  double calculateEVForStand(const GameState& state);
+  double calculateEVForStand(const GameState& state) const;
   double calculateEVForSplit(const GameState& state) const;
   double calculateEVForDouble(const GameState& state) const;
   double calculateEVForSurrender(const GameState& state) const;
+  double calculateEVForInsurance(const GameState& state) const;
+  double calculateEVForOptimalStrategy(const GameState& state) const;
 
   DealerOutcomeProbabilities calcDealerOutcomeProbs(
       const GameState& state,
-      std::map<DealerMemoKey, DealerOutcomeProbabilities>& memo);
+      std::map<DealerMemoKey, DealerOutcomeProbabilities>& memo) const;
 
   std::string getRuleDescription() const;
 

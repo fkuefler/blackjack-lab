@@ -6,14 +6,48 @@
 
 #include "../include/BlackjackGame.h"
 
-int main() {
-  Deck testDeck = Deck(6);
-  Card p1 = Card(Rank::Ten, Suit::Spades);
-  Card p2 = Card(Rank::Ace, Suit::Hearts);
-  Card d1 = Card(Rank::Nine, Suit::Clubs);
+// Helper function to create a card from a string like "A", "K", "7"
+Card cardFromStr(const std::string& s) {
+  Rank r;
+  if (s == "A")
+    r = Rank::Ace;
+  else if (s == "2")
+    r = Rank::Two;
+  else if (s == "3")
+    r = Rank::Three;
+  else if (s == "4")
+    r = Rank::Four;
+  else if (s == "5")
+    r = Rank::Five;
+  else if (s == "6")
+    r = Rank::Six;
+  else if (s == "7")
+    r = Rank::Seven;
+  else if (s == "8")
+    r = Rank::Eight;
+  else if (s == "9")
+    r = Rank::Nine;
+  else if (s == "T" || s == "J" || s == "Q" || s == "K")
+    r = Rank::Ten;  // Group 10-value cards
+  else
+    throw std::invalid_argument("Invalid card rank input");
+  return Card(r, Suit::Hearts);  // Suit doesn't matter for calculations
+}
 
-  // Remove the dealt cards from the deck to ensure correct remaining card
-  // counts
+int main() {
+  std::string p1_str, p2_str, d1_str;
+  std::cout << "Enter player's first card (A, 2-9, T, J, Q, K): ";
+  std::cin >> p1_str;
+  std::cout << "Enter player's second card: ";
+  std::cin >> p2_str;
+  std::cout << "Enter dealer's up card: ";
+  std::cin >> d1_str;
+
+  Card p1 = cardFromStr(p1_str);
+  Card p2 = cardFromStr(p2_str);
+  Card d1 = cardFromStr(d1_str);
+
+  Deck testDeck = Deck(6);
   testDeck.dealCard(p1);
   testDeck.dealCard(p2);
   testDeck.dealCard(d1);
@@ -24,13 +58,25 @@ int main() {
 
   BlackjackGame game = BlackjackGame();
   GameState state = game.getGameState(playerHand, d1, testDeck, true);
-  double standEV = game.calculateEVForStand(state);
-  std::string dealerOutcomes = game.getDealerOutcomesAsString(state);
 
-  std::cout << "Player has 21 vs Dealer Nine" << std::endl;
+  std::cout << "\n--- Results ---" << std::endl;
+  std::cout << "Player has " << playerHand.getValue() << " vs Dealer "
+            << d1.getValue() << std::endl;
+
+  double standEV = game.calculateEVForStand(state);
   std::cout << "EV for standing: " << standEV << std::endl;
-  std::cout << "Dealer Outcomes: " << std::endl;
-  std::cout << dealerOutcomes << std::endl;
+  double doubleEV = game.calculateEVForDouble(state);
+  std::cout << "EV for doubling: " << doubleEV << std::endl;
+  double splitEV = game.calculateEVForSplit(state);
+  std::cout << "EV for splitting: " << splitEV << std::endl;
+  double hitEV = game.calculateEVForHit(state);
+  std::cout << "EV for hitting: " << hitEV << std::endl;
+  double surrenderEV = game.calculateEVForSurrender(state);
+  std::cout << "EV for surrender: " << surrenderEV << std::endl;
+  double insuranceEV = game.calculateEVForInsurance(state);
+  std::cout << "EV for insurance: " << insuranceEV << std::endl;
+  double optimalEV = game.calculateEVForOptimalStrategy(state);
+  std::cout << "EV for optimal strategy: " << optimalEV << std::endl;
 
   return 0;
 }
