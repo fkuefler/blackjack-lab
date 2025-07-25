@@ -34,6 +34,26 @@ Card cardFromStr(const std::string& s) {
   return Card(r, Suit::Hearts);  // Suit doesn't matter for calculations
 }
 
+// Helper function to convert a PlayerAction enum to a string
+std::string actionToStr(PlayerAction action) {
+  switch (action) {
+    case PlayerAction::Hit:
+      return "Hit";
+    case PlayerAction::Stand:
+      return "Stand";
+    case PlayerAction::Double:
+      return "Double";
+    case PlayerAction::Split:
+      return "Split";
+    case PlayerAction::Surrender:
+      return "Surrender";
+    case PlayerAction::None:
+      return "None (Bust)";
+    default:
+      return "Unknown";
+  }
+}
+
 int main() {
   std::string p1_str, p2_str, d1_str;
   std::cout << "Enter player's first card (A, 2-9, T, J, Q, K): ";
@@ -59,24 +79,31 @@ int main() {
   BlackjackGame game = BlackjackGame();
   GameState state = game.getGameState(playerHand, d1, testDeck, true);
 
+  // Before starting a new, independent analysis, always clear the memoization
+  // caches to ensure results from a previous run aren't used.
+  game.clearMemos();
+
+  // Calculate all EVs by calling the main strategy function once.
+  // This is the most efficient way, as it populates and uses the cache
+  // internally to solve the entire problem.
+  EVResult result = game.calculateEVForOptimalStrategy(state);
+
   std::cout << "\n--- Results ---" << std::endl;
   std::cout << "Player has " << playerHand.getValue() << " vs Dealer "
             << d1.getValue() << std::endl;
 
-  double standEV = game.calculateEVForStand(state);
-  std::cout << "EV for standing: " << standEV << std::endl;
-  double doubleEV = game.calculateEVForDouble(state);
-  std::cout << "EV for doubling: " << doubleEV << std::endl;
-  double splitEV = game.calculateEVForSplit(state);
-  std::cout << "EV for splitting: " << splitEV << std::endl;
-  double hitEV = game.calculateEVForHit(state);
-  std::cout << "EV for hitting: " << hitEV << std::endl;
-  double surrenderEV = game.calculateEVForSurrender(state);
-  std::cout << "EV for surrender: " << surrenderEV << std::endl;
-  double insuranceEV = game.calculateEVForInsurance(state);
-  std::cout << "EV for insurance: " << insuranceEV << std::endl;
-  double optimalEV = game.calculateEVForOptimalStrategy(state);
-  std::cout << "EV for optimal strategy: " << optimalEV << std::endl;
+  std::cout << "EV for standing: " << result.standEV << std::endl;
+  std::cout << "EV for doubling: " << result.doubleEV << std::endl;
+  std::cout << "EV for splitting: " << result.splitEV << std::endl;
+  std::cout << "EV for hitting: " << result.hitEV << std::endl;
+  std::cout << "EV for surrender: " << result.surrenderEV << std::endl;
+  // Insurance is not part of the optimal strategy EV calculation, so call it
+  // separately if needed.
+  std::cout << "EV for insurance: " << game.calculateEVForInsurance(state)
+            << std::endl;
+  std::cout << "\nOptimal action: " << actionToStr(result.optimalAction)
+            << std::endl;
+  std::cout << "Optimal EV: " << result.optimalEV << std::endl;
 
   return 0;
 }
