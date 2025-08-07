@@ -42,33 +42,30 @@ double BlackjackGame::calculatePayout(int playerHandScore, int dealerHandScore,
   return basePayout;
 }
 
-// Converts the remainingCardCounts map to an array
-DeckCounts BlackjackGame::convertMapToDeckCount(
-    const std::map<Rank, int>& remainingCardCounts) const {
+BlackjackGame::DeckCounts BlackjackGame::convertMapToDeckCount(
+    const std::map<Card::Rank, int>& remainingCardCounts) const {
   DeckCounts arrayCounts = {};
-
-  arrayCounts[0] = remainingCardCounts.at(Rank::Two);
-  arrayCounts[1] = remainingCardCounts.at(Rank::Three);
-  arrayCounts[2] = remainingCardCounts.at(Rank::Four);
-  arrayCounts[3] = remainingCardCounts.at(Rank::Five);
-  arrayCounts[4] = remainingCardCounts.at(Rank::Six);
-  arrayCounts[5] = remainingCardCounts.at(Rank::Seven);
-  arrayCounts[6] = remainingCardCounts.at(Rank::Eight);
-  arrayCounts[7] = remainingCardCounts.at(Rank::Nine);
-  arrayCounts[8] =
-      remainingCardCounts.at(Rank::Ten) + remainingCardCounts.at(Rank::Jack) +
-      remainingCardCounts.at(Rank::Queen) + remainingCardCounts.at(Rank::King);
-  arrayCounts[9] = remainingCardCounts.at(Rank::Ace);
+  arrayCounts[0] = remainingCardCounts.at(Card::Rank::Two);
+  arrayCounts[1] = remainingCardCounts.at(Card::Rank::Three);
+  arrayCounts[2] = remainingCardCounts.at(Card::Rank::Four);
+  arrayCounts[3] = remainingCardCounts.at(Card::Rank::Five);
+  arrayCounts[4] = remainingCardCounts.at(Card::Rank::Six);
+  arrayCounts[5] = remainingCardCounts.at(Card::Rank::Seven);
+  arrayCounts[6] = remainingCardCounts.at(Card::Rank::Eight);
+  arrayCounts[7] = remainingCardCounts.at(Card::Rank::Nine);
+  arrayCounts[8] = remainingCardCounts.at(Card::Rank::Ten) +
+                   remainingCardCounts.at(Card::Rank::Jack) +
+                   remainingCardCounts.at(Card::Rank::Queen) +
+                   remainingCardCounts.at(Card::Rank::King);
+  arrayCounts[9] = remainingCardCounts.at(Card::Rank::Ace);
   return arrayCounts;
 }
 
-// Helper method to make a new GameState that has added a card to the dealer
-// hand and removed it from the shoe.
-GameState BlackjackGame::getGameStateMinusCardToDealer(
-    const GameState& oldState, Rank rankToDealer) const {
+BlackjackGame::GameState BlackjackGame::getGameStateMinusCardToDealer(
+    const GameState& oldState, Card::Rank rankToDealer) const {
   GameState newState = oldState;
   // Only for calculation purposes so suit doesn't matter, defaulted to hearts
-  newState.dealerHand.addCard(Card(rankToDealer, Suit::Hearts));
+  newState.dealerHand.addCard(Card(rankToDealer, Card::Suit::Hearts));
   newState.totalCardsRemaining = oldState.totalCardsRemaining - 1;
   newState.remainingCardCounts[rankToDealer]--;
   // The dealer is taking a card, so they have not checked for BJ on this new
@@ -77,21 +74,18 @@ GameState BlackjackGame::getGameStateMinusCardToDealer(
   return newState;
 }
 
-// Helper method to make a new GameState that has added a card to the player
-// hand and removed it from the shoe.
-GameState BlackjackGame::getGameStateMinusCardToPlayer(
-    const GameState& oldState, Rank rankToPlayer) const {
+BlackjackGame::GameState BlackjackGame::getGameStateMinusCardToPlayer(
+    const GameState& oldState, Card::Rank rankToPlayer) const {
   GameState newState = oldState;
   // Only for calculation purposes so suit doesn't matter, defaulted to hearts
-  newState.playerHand.addCard(Card(rankToPlayer, Suit::Hearts));
+  newState.playerHand.addCard(Card(rankToPlayer, Card::Suit::Hearts));
   newState.totalCardsRemaining = oldState.totalCardsRemaining - 1;
   newState.remainingCardCounts[rankToPlayer]--;
   return newState;
 }
 
-// Helper method to make a new GameState using one card kept from a split.
-GameState BlackjackGame::getGameStateAfterSplit(const GameState& oldState,
-                                                Card cardToKeep) const {
+BlackjackGame::GameState BlackjackGame::getGameStateAfterSplit(
+    const GameState& oldState, Card cardToKeep) const {
   GameState newState = oldState;
   newState.playerHand = Hand();
   newState.playerHand.addCard(cardToKeep);
@@ -101,7 +95,7 @@ GameState BlackjackGame::getGameStateAfterSplit(const GameState& oldState,
 }
 
 double BlackjackGame::getCardDrawProbability(const GameState& state,
-                                             Rank cardRank,
+                                             Card::Rank cardRank,
                                              bool cardForDealer) const {
   if (state.totalCardsRemaining <= 0) {
     return 0.0;
@@ -120,20 +114,20 @@ double BlackjackGame::getCardDrawProbability(const GameState& state,
   if (state.dealerChecked && cardForDealer) {
     // If dealer upcard is a 10-value card, the hole card cannot be an Ace.
     if (state.dealerUpcard.getValue() == 10) {
-      if (cardRank == Rank::Ace) {
+      if (cardRank == Card::Rank::Ace) {
         return 0.0;
       }
-      totalCards -= state.remainingCardCounts.at(Rank::Ace);
+      totalCards -= state.remainingCardCounts.at(Card::Rank::Ace);
     }
     // If dealer upcard is an Ace, the hole card cannot be a 10-value card.
-    else if (state.dealerUpcard.rank == Rank::Ace) {
-      if (Card(cardRank, Suit::Hearts).getValue() == 10) {
+    else if (state.dealerUpcard.getRank() == Card::Rank::Ace) {
+      if (Card(cardRank, Card::Suit::Hearts).getValue() == 10) {
         return 0.0;
       }
-      totalCards -= (state.remainingCardCounts.at(Rank::Ten) +
-                     state.remainingCardCounts.at(Rank::Jack) +
-                     state.remainingCardCounts.at(Rank::Queen) +
-                     state.remainingCardCounts.at(Rank::King));
+      totalCards -= (state.remainingCardCounts.at(Card::Rank::Ten) +
+                     state.remainingCardCounts.at(Card::Rank::Jack) +
+                     state.remainingCardCounts.at(Card::Rank::Queen) +
+                     state.remainingCardCounts.at(Card::Rank::King));
     }
   }
 
@@ -142,36 +136,79 @@ double BlackjackGame::getCardDrawProbability(const GameState& state,
   return countOfRank / totalCards;
 }
 
-BlackjackGame::BlackjackGame(int decks, bool h17, double bjPayout, bool das,
-                             SurrenderType surrender, bool splitAces,
-                             int maxSplits, double insurancePayout)
-    : numDecks(decks),
-      dealerHitsSoft17(h17),
-      blackjackPayout(bjPayout),
-      insurancePayout(insurancePayout),
-      canDoubleAfterSplit(das),
-      surrenderType(surrender),
-      canSplitAces(splitAces),
-      maxSplits(maxSplits) {}
+BlackjackGame::BlackjackGame(const GameRules& rules)
+    : numDecks(rules.numDecks),
+      dealerHitsSoft17(rules.dealerHitsSoft17),
+      blackjackPayout(rules.blackjackPayout),
+      insurancePayout(rules.insurancePayout),
+      canDoubleAfterSplit(rules.canDoubleAfterSplit),
+      surrenderType(rules.surrenderType),
+      canSplitAces(rules.canSplitAces),
+      maxSplits(rules.maxSplits) {}
 
 void BlackjackGame::clearMemos() const {
   DealerMemo_.clear();
   PlayerMemo_.clear();
 }
 
-GameState BlackjackGame::getGameState(const Hand& playerHand,
-                                      const Card& dealerUpcard,
-                                      const Deck& currentDeck,
-                                      const bool dealerCheckedForBJ) const {
-  GameState state;
-  state.playerHand = playerHand;
-  state.dealerUpcard = dealerUpcard;
-  state.dealerHand = Hand();
-  state.dealerHand.addCard(dealerUpcard);
-  state.remainingCardCounts = currentDeck.getRemainingCardCounts();
-  state.totalCardsRemaining = currentDeck.getRemainingCardsCount();
-  state.originalNumDecks = numDecks;
-  state.dealerChecked = dealerCheckedForBJ;
+BlackjackGame::GameState BlackjackGame::getGameStateForCalculation(
+    const std::vector<Card::Rank>& player_ranks, const Card::Rank& dealer_rank,
+    const int num_decks, const bool dealerCheckedForBJ) {
+  Hand playerHand;
+  Hand dealerHand;
+
+  Deck deck(num_decks);
+
+  for (const auto& rank : player_ranks) {
+    bool cardExists = false;
+    for (int i = 0; i < 4; i++) {
+      Card::Suit suit = static_cast<Card::Suit>(i);
+      Card cardToDeal(rank, suit);
+      try {
+        deck.dealCard(cardToDeal);
+        playerHand.addCard(cardToDeal);
+        cardExists = true;
+        break;
+      } catch (const std::runtime_error& e) {
+        // Card can't be added with this suit
+      }
+    }
+    if (!cardExists) {
+      throw std::runtime_error("Too many cards of rank " +
+                               Card::rankToString(rank) + " requested.");
+    }
+  }
+
+  bool cardExists = false;
+  for (int i = 0; i < 4; i++) {
+    Card::Suit suit = static_cast<Card::Suit>(i);
+    Card cardToDeal(dealer_rank, suit);
+    try {
+      deck.dealCard(cardToDeal);
+      dealerHand.addCard(cardToDeal);
+      cardExists = true;
+      break;
+    } catch (const std::runtime_error& e) {
+      // Card can't be added with this suit
+    }
+  }
+  if (!cardExists) {
+    throw std::runtime_error("Too many cards of rank " +
+                             Card::rankToString(dealer_rank) + " requested.");
+  }
+
+  GameState state{
+      playerHand,
+      dealerHand.getCards().at(0),
+      dealerHand,
+      deck.getRemainingCardCounts(),
+      deck.getRemainingCardsCount(),
+      num_decks,
+      dealerCheckedForBJ,
+      false,  // wasSplit
+      1       // numPlayerHands
+  };
+
   return state;
 }
 
@@ -242,13 +279,14 @@ double BlackjackGame::calculateEVForSplit(const GameState& state) const {
     return std::nan("");
   }
 
+  // If player hand is a soft 12 (Ace + Ace) and splitting aces is not allowed
   if (state.playerHand.getValue() == 12 && state.playerHand.isSoft() &&
       !canSplitAces) {
     return std::nan("");
   }
 
   GameState singleHandState =
-      getGameStateAfterSplit(state, state.playerHand.cards[0]);
+      getGameStateAfterSplit(state, state.playerHand.getCards().at(0));
   double singleHandEV = 0.0;
 
   for (const auto& pair : singleHandState.remainingCardCounts) {
@@ -266,11 +304,16 @@ double BlackjackGame::calculateEVForSplit(const GameState& state) const {
           probDrawCard * calculateEVForOptimalStrategy(newState).optimalEV;
     }
   }
+  // Since splitting creates two hands, we multiply the single hand EV by 2.
+  // This is not perfectly accurate, but it gives a very close approximation and
+  // runs in a reasonable time frame (calculating exact EV would be extremely
+  // computationally expensive).
   return 2 * singleHandEV;
 }
 
 double BlackjackGame::calculateEVForDouble(const GameState& state) const {
-  if (state.playerHand.cards.size() != 2 || state.playerHand.getValue() == 21) {
+  if (state.playerHand.getCards().size() != 2 ||
+      state.playerHand.getValue() == 21) {
     return std::nan("");
   }
 
@@ -299,7 +342,7 @@ double BlackjackGame::calculateEVForDouble(const GameState& state) const {
 
 double BlackjackGame::calculateEVForSurrender(const GameState& state) const {
   // Surrender is only allowed on the initial two cards.
-  if (state.playerHand.cards.size() != 2) {
+  if (state.playerHand.getCards().size() != 2) {
     return std::nan("");
   }
 
@@ -307,8 +350,9 @@ double BlackjackGame::calculateEVForSurrender(const GameState& state) const {
     return std::nan("");
   }
 
-  bool dealerCanHaveBlackjack = (state.dealerUpcard.getValue() == 10 ||
-                                 state.dealerUpcard.rank == Rank::Ace);
+  bool dealerCanHaveBlackjack =
+      (state.dealerUpcard.getValue() == 10 ||
+       state.dealerUpcard.getRank() == Card::Rank::Ace);
 
   if (dealerCanHaveBlackjack) {
     // For Late Surrender, we must wait for the dealer to check for BJ.
@@ -329,17 +373,17 @@ double BlackjackGame::calculateEVForSurrender(const GameState& state) const {
 }
 
 double BlackjackGame::calculateEVForInsurance(const GameState& state) const {
-  if (state.dealerUpcard.rank != Rank::Ace || state.dealerChecked) {
+  if (state.dealerUpcard.getRank() != Card::Rank::Ace || state.dealerChecked) {
     return std::nan("");
   }
-  double nextCardTenProb = getCardDrawProbability(state, Rank::Ten) +
-                           getCardDrawProbability(state, Rank::Jack) +
-                           getCardDrawProbability(state, Rank::Queen) +
-                           getCardDrawProbability(state, Rank::King);
+  double nextCardTenProb = getCardDrawProbability(state, Card::Rank::Ten) +
+                           getCardDrawProbability(state, Card::Rank::Jack) +
+                           getCardDrawProbability(state, Card::Rank::Queen) +
+                           getCardDrawProbability(state, Card::Rank::King);
   return nextCardTenProb * insurancePayout + (1 - nextCardTenProb) * -1.0;
 }
 
-EVResult BlackjackGame::calculateEVForOptimalStrategy(
+BlackjackGame::EVResult BlackjackGame::calculateEVForOptimalStrategy(
     const GameState& state) const {
   // If player hand is busted, EV is always -1
   if (state.playerHand.isBust()) {
@@ -364,6 +408,7 @@ EVResult BlackjackGame::calculateEVForOptimalStrategy(
   result.surrenderEV = calculateEVForSurrender(state);
   result.splitEV = calculateEVForSplit(state);
 
+  // Record the optimal action and its EV in the result
   result.optimalEV = result.standEV;
   result.optimalAction = PlayerAction::Stand;
 
@@ -389,13 +434,13 @@ EVResult BlackjackGame::calculateEVForOptimalStrategy(
   return result;
 }
 
-// Calculates the probability of each dealer outcome
-DealerOutcomeProbabilities BlackjackGame::calcDealerOutcomeProbs(
+BlackjackGame::DealerOutcomeProbabilities BlackjackGame::calcDealerOutcomeProbs(
     const GameState& state) const {
   // Key used for memo
   DealerMemoKey key(state.dealerHand.getValue(), state.dealerHand.isSoft(),
                     convertMapToDeckCount(state.remainingCardCounts));
 
+  // Check if cache contains result
   if (DealerMemo_.count(key)) {
     return DealerMemo_[key];
   }
@@ -463,10 +508,6 @@ DealerOutcomeProbabilities BlackjackGame::calcDealerOutcomeProbs(
   // Add situation to memo and return outcomes
   DealerMemo_[key] = outcomes;
   return outcomes;
-}
-
-std::string BlackjackGame::getRuleDescription() const {
-  return "";  // TODO
 }
 
 std::string BlackjackGame::getDealerOutcomesAsString(const GameState& state) {
