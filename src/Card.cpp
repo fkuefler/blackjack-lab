@@ -4,13 +4,6 @@
 #include <stdexcept>
 #include <string>
 
-// Default constructor
-Card::Card() : rank(Rank::Ace), suit(Suit::Hearts) {}
-
-// Constructor for new Card object
-Card::Card(Rank r, Suit s) : rank(r), suit(s) {}
-
-// Returns the blackjack value of the card
 int Card::getValue() const {
   switch (rank) {
     case Rank::Two:
@@ -41,80 +34,60 @@ int Card::getValue() const {
   }
 }
 
-// Returns a string representation of the card
 std::string Card::toString() const {
-  std::string rankStr;  // Rank component of string
-  switch (rank) {
-    case Rank::Two:
-      rankStr = "2";
-      break;
-    case Rank::Three:
-      rankStr = "3";
-      break;
-    case Rank::Four:
-      rankStr = "4";
-      break;
-    case Rank::Five:
-      rankStr = "5";
-      break;
-    case Rank::Six:
-      rankStr = "6";
-      break;
-    case Rank::Seven:
-      rankStr = "7";
-      break;
-    case Rank::Eight:
-      rankStr = "8";
-      break;
-    case Rank::Nine:
-      rankStr = "9";
-      break;
-    case Rank::Ten:
-      rankStr = "T";
-      break;
-    case Rank::Jack:
-      rankStr = "J";
-      break;
-    case Rank::Queen:
-      rankStr = "Q";
-      break;
-    case Rank::King:
-      rankStr = "K";
-      break;
-    case Rank::Ace:
-      rankStr = "A";
-      break;
-    default:
-      rankStr = "?";
-      break;
-  }
-
-  std::string suitStr;  // Suit component of string
-  switch (suit) {
-    case Suit::Clubs:
-      suitStr = "c";
-      break;
-    case Suit::Diamonds:
-      suitStr = "d";
-      break;
-    case Suit::Hearts:
-      suitStr = "h";
-      break;
-    case Suit::Spades:
-      suitStr = "s";
-      break;
-    default:
-      suitStr = "?";
-      break;
-  }
-
-  return rankStr + suitStr;
+  return Card::rankToString(rank) + Card::suitToString(suit);
 }
 
-// Operator Overload Definition: operator ==
+std::string Card::rankToString(Card::Rank rank) {
+  switch (rank) {
+    case Rank::Ace:
+      return "Ace";
+    case Rank::Two:
+      return "Two";
+    case Rank::Three:
+      return "Three";
+    case Rank::Four:
+      return "Four";
+    case Rank::Five:
+      return "Five";
+    case Rank::Six:
+      return "Six";
+    case Rank::Seven:
+      return "Seven";
+    case Rank::Eight:
+      return "Eight";
+    case Rank::Nine:
+      return "Nine";
+    case Rank::Ten:
+      return "Ten";
+    case Rank::Jack:
+      return "Jack";
+    case Rank::Queen:
+      return "Queen";
+    case Rank::King:
+      return "King";
+    default:
+      throw std::invalid_argument("?");
+  }
+}
+
+std::string Card::suitToString(Card::Suit suit) {
+  switch (suit) {
+    case Suit::Hearts:
+      return "Hearts";
+    case Suit::Diamonds:
+      return "Diamonds";
+    case Suit::Clubs:
+      return "Clubs";
+    case Suit::Spades:
+      return "Spades";
+    default:
+      throw std::invalid_argument("?");
+  }
+}
+
 bool Card::operator==(const Card& other) const {
   return (rank == other.rank && suit == other.suit);
 }
 
-// Operator Overload Definition: operator !=
 bool Card::operator!=(const Card& other) const { return !(*this == other); }

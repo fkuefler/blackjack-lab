@@ -11,23 +11,22 @@ void Deck::buildDeck() {
   remainingCardCounts.clear();
 
   for (int d = 0; d < numberOfDecks; ++d) {
-    for (int s = static_cast<int>(Suit::Hearts);
-         s <= static_cast<int>(Suit::Spades); ++s) {
-      for (int r = static_cast<int>(Rank::Ace);
-           r <= static_cast<int>(Rank::King); ++r) {
-        originalDeckContents.emplace_back(static_cast<Rank>(r),
-                                          static_cast<Suit>(s));
+    for (int s = static_cast<int>(Card::Suit::Hearts);
+         s <= static_cast<int>(Card::Suit::Spades); ++s) {
+      for (int r = static_cast<int>(Card::Rank::Ace);
+           r <= static_cast<int>(Card::Rank::King); ++r) {
+        originalDeckContents.emplace_back(static_cast<Card::Rank>(r),
+                                          static_cast<Card::Suit>(s));
       }
     }
   }
   cards = originalDeckContents;
   // Populate the counts map from the newly built deck
   for (const auto& card : cards) {
-    remainingCardCounts[card.rank]++;
+    remainingCardCounts[card.getRank()]++;
   }
 }
 
-// Constructor
 Deck::Deck(int numDecks) : numberOfDecks(numDecks) {
   std::random_device rd;
   rng.seed(rd());
@@ -36,16 +35,14 @@ Deck::Deck(int numDecks) : numberOfDecks(numDecks) {
   shuffle();
 }
 
-// Shuffle cards currently in cards vector
 void Deck::shuffle() { std::shuffle(cards.begin(), cards.end(), rng); }
 
-// Deal a card from top of the deck (back of the vector)
 Card Deck::dealCard() {
   if (isEmpty()) {
     throw std::runtime_error("Attempted to deal from empty deck");
   }
   Card dealtCard = cards.back();
-  remainingCardCounts[dealtCard.rank]--;
+  remainingCardCounts[dealtCard.getRank()]--;
   cards.pop_back();
   return dealtCard;
 }
@@ -55,7 +52,7 @@ Card Deck::dealCard(Card card) {
 
   if (it != cards.end()) {
     Card dealtCard = *it;
-    remainingCardCounts[dealtCard.rank]--;
+    remainingCardCounts[dealtCard.getRank()]--;
     cards.erase(it);
     return dealtCard;
   }
@@ -64,24 +61,20 @@ Card Deck::dealCard(Card card) {
       "Attempted to deal a specific card that is not in the deck.");
 }
 
-// Check if deck is empty
 bool Deck::isEmpty() const { return cards.empty(); }
 
-// Return number of cards remaining in deck
 int Deck::getRemainingCardsCount() const { return cards.size(); }
 
-// Returns a summary of the number of cards of each Rank remaining in the deck
-std::map<Rank, int> Deck::getRemainingCardCounts() const {
+std::map<Card::Rank, int> Deck::getRemainingCardCounts() const {
   return remainingCardCounts;
 }
 
-// Resets deck to original state and shuffles
 void Deck::reset() {
   cards = originalDeckContents;
   // Recalculate the counts from the full original deck
   remainingCardCounts.clear();
   for (const auto& card : cards) {
-    remainingCardCounts[card.rank]++;
+    remainingCardCounts[card.getRank()]++;
   }
   shuffle();
 }

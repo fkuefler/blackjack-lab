@@ -10,11 +10,12 @@
 
 class Deck {
  private:
-  std::vector<Card> cards;                  // Cards currently in shoe
-  std::vector<Card> originalDeckContents;   // Initial set of cards
-  std::map<Rank, int> remainingCardCounts;  // Counts of each rank in the shoe
-  std::mt19937 rng;   // Mersenne Twister engine for random numbers
-  int numberOfDecks;  // Initial number of decks used to build shoe
+  std::vector<Card> cards;                 // Cards currently in shoe
+  std::vector<Card> originalDeckContents;  // Initial set of cards
+  std::map<Card::Rank, int>
+      remainingCardCounts;  // Counts of each rank in the shoe
+  std::mt19937 rng;         // Mersenne Twister engine for random numbers
+  int numberOfDecks;        // Initial number of decks used to build shoe
 
   // Private helper method to build initial set of cards
   void buildDeck();
@@ -39,8 +40,8 @@ class Deck {
   int getRemainingCardsCount() const;
 
   // Returns a summary of the number of cards of each Rank remaining in the deck
-  std::map<Rank, int> getRemainingCardCounts() const;
+  std::map<Card::Rank, int> getRemainingCardCounts() const;
 
-  // Resets deck to initial state and stuffles
+  // Resets deck to initial state and shuffles
   void reset();
 };

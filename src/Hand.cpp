@@ -1,5 +1,4 @@
 // Hand.cpp
-
 #include "Hand.h"
 
 #include <algorithm>
@@ -7,20 +6,15 @@
 #include <sstream>
 #include <stdexcept>
 
-// Constructor
-Hand::Hand() {}
-
-// Add a card to the hand
 void Hand::addCard(const Card& card) { cards.push_back(card); }
 
-// Calculate the total value of the hand
 int Hand::getValue() const {
   int score = 0;
   int numAces = 0;
 
   // First pass: Sum card values using Ace as default 11
   for (const auto& card : cards) {
-    if (card.rank == Rank::Ace) {
+    if (card.getRank() == Card::Rank::Ace) {
       numAces++;  // Count no. of aces in hand
     }
     score += card.getValue();
@@ -35,14 +29,13 @@ int Hand::getValue() const {
   return score;
 }
 
-// Checks if hand has an ace that can be counted as 11 without busting
 bool Hand::isSoft() const {
   bool hasAce = false;
   int numAces = 0;
   int potentialSoftScore = 0;  // Score if ace counted as 11
 
   for (const auto& card : cards) {
-    if (card.rank == Rank::Ace) {
+    if (card.getRank() == Card::Rank::Ace) {
       hasAce = true;
       numAces++;
     }
@@ -59,21 +52,16 @@ bool Hand::isSoft() const {
   return hasAce && potentialSoftScore <= 21;
 }
 
-// Checks if hand is busted
 bool Hand::isBust() const { return getValue() > 21; }
 
-// Checks if hand is a blackjack
 bool Hand::isBlackjack() const { return cards.size() == 2 && getValue() == 21; }
 
-// Checks if hand can split (hand contains exactly two cards of same rank)
 bool Hand::canSplit() const {
-  return cards.size() == 2 && cards[0].rank == cards[1].rank;
+  return cards.size() == 2 && cards[0].getRank() == cards[1].getRank();
 }
 
-// Clears the hand
 void Hand::clear() { cards.clear(); }
 
-// Returns a string representation of hand (e.g. "As Kd 4c")
 std::string Hand::toString() const {
   std::stringstream ss;
   for (size_t i = 0; i < cards.size(); ++i) {

@@ -8,11 +8,11 @@
 
 class Hand {
  public:
-  // Represents a hand of cards in a card game
-  std::vector<Card> cards;
-
   // Constructor for a new Hand object
   Hand();
+
+  // Get the list of cards in the hand
+  std::vector<Card> getCards() const { return cards; }
 
   // Add a card to the hand
   void addCard(const Card& card);
@@ -39,4 +39,8 @@ class Hand {
 
   // Returns a string representation of the hand
   std::string toString() const;
+
+ private:
+  // Represents a hand of cards in a card game
+  std::vector<Card> cards;
 };
