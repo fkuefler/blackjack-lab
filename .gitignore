@@ -18,7 +18,6 @@
 # VS Code specific files to ignore
 # Ignore user-specific settings, but keep project-specific configs
 .vscode/*
-!.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json

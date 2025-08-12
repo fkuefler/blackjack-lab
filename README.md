@@ -1,2 +1,2 @@
-# BlackjackEVCalculator
-A C++ Blackjack Expected Value Calculator and Trainer
+# Blackjack Lab
+A C++ Blackjack Expected Value Calculator, Custom Chart Generator, and Strategy Trainer
