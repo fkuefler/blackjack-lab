@@ -6,6 +6,8 @@
 #include <sstream>
 #include <stdexcept>
 
+Hand::Hand() {}
+
 void Hand::addCard(const Card& card) { cards.push_back(card); }
 
 int Hand::getValue() const {

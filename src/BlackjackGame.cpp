@@ -9,6 +9,7 @@
 #include <stdexcept>
 #include <string>
 
+#include "BlackjackUtils.h"
 #include "Card.h"
 #include "Deck.h"
 #include "Hand.h"
@@ -175,7 +176,8 @@ BlackjackGame::GameState BlackjackGame::getGameStateForCalculation(
     }
     if (!cardExists) {
       throw std::runtime_error("Too many cards of rank " +
-                               Card::rankToString(rank) + " requested.");
+                               BlackjackUtils::rankToString(rank) +
+                               " requested.");
     }
   }
 
@@ -194,7 +196,8 @@ BlackjackGame::GameState BlackjackGame::getGameStateForCalculation(
   }
   if (!cardExists) {
     throw std::runtime_error("Too many cards of rank " +
-                             Card::rankToString(dealer_rank) + " requested.");
+                             BlackjackUtils::rankToString(dealer_rank) +
+                             " requested.");
   }
 
   GameState state{

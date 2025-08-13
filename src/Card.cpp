@@ -4,6 +4,8 @@
 #include <stdexcept>
 #include <string>
 
+#include "BlackjackUtils.h"
+
 int Card::getValue() const {
   switch (rank) {
     case Rank::Two:
@@ -35,55 +37,8 @@ int Card::getValue() const {
 }
 
 std::string Card::toString() const {
-  return Card::rankToString(rank) + Card::suitToString(suit);
-}
-
-std::string Card::rankToString(Card::Rank rank) {
-  switch (rank) {
-    case Rank::Ace:
-      return "Ace";
-    case Rank::Two:
-      return "Two";
-    case Rank::Three:
-      return "Three";
-    case Rank::Four:
-      return "Four";
-    case Rank::Five:
-      return "Five";
-    case Rank::Six:
-      return "Six";
-    case Rank::Seven:
-      return "Seven";
-    case Rank::Eight:
-      return "Eight";
-    case Rank::Nine:
-      return "Nine";
-    case Rank::Ten:
-      return "Ten";
-    case Rank::Jack:
-      return "Jack";
-    case Rank::Queen:
-      return "Queen";
-    case Rank::King:
-      return "King";
-    default:
-      throw std::invalid_argument("?");
-  }
-}
-
-std::string Card::suitToString(Card::Suit suit) {
-  switch (suit) {
-    case Suit::Hearts:
-      return "Hearts";
-    case Suit::Diamonds:
-      return "Diamonds";
-    case Suit::Clubs:
-      return "Clubs";
-    case Suit::Spades:
-      return "Spades";
-    default:
-      throw std::invalid_argument("?");
-  }
+  return BlackjackUtils::rankToString(rank) + " of " +
+         BlackjackUtils::suitToString(suit);
 }
 
 bool Card::operator==(const Card& other) const {

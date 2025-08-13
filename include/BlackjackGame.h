@@ -15,7 +15,7 @@
 class BlackjackGame {
  public:
   enum class PlayerAction { Hit, Stand, Split, Double, Surrender, None };
-  enum class SurrenderType { None, Late, Early };
+  enum class SurrenderType { Early, Late, None };
 
   // Stores the state of the game
   struct GameState {
@@ -35,12 +35,12 @@ class BlackjackGame {
   struct GameRules {
     int numDecks = 6;
     bool dealerHitsSoft17 = true;
-    double blackjackPayout = 1.5;
     bool canDoubleAfterSplit = true;
     SurrenderType surrenderType = SurrenderType::Late;
-    bool canSplitAces = false;
-    int maxSplits = 3;
+    double blackjackPayout = 1.5;
     double insurancePayout = 2.0;
+    bool canSplitAces = true;
+    int maxSplits = 3;
   };
 
   // Stores the probabilities of dealer drawing to specific totals

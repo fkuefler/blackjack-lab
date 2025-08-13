@@ -39,12 +39,6 @@ class Card {
   // Returns a string representation of the card
   std::string toString() const;
 
-  // Returns a string representation of a rank
-  static std::string rankToString(Card::Rank rank);
-
-  // Returns a string representation of a suit
-  static std::string suitToString(Card::Suit suit);
-
   // Operator Overload Definition: checks two cards for equality
   bool operator==(const Card& other) const;
 
