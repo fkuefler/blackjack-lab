@@ -12,6 +12,8 @@ set(SOURCE_FILES
     src/Card.cpp
     src/Deck.cpp
     src/Hand.cpp
+    src/BlackjackUtils.cpp
+    src/EVCalculator.cpp
 )
 
 # Set up the include directories

@@ -2,7 +2,7 @@
 
 #include <stdexcept>
 
-Card::Rank stringToRank(const std::string& str) {
+Card::Rank BlackjackUtils::stringToRank(const std::string& str) {
   if (str == "2") return Card::Rank::Two;
   if (str == "3") return Card::Rank::Three;
   if (str == "4") return Card::Rank::Four;
@@ -19,7 +19,7 @@ Card::Rank stringToRank(const std::string& str) {
   throw std::invalid_argument("Invalid rank string");
 }
 
-std::string rankToString(Card::Rank rank) {
+std::string BlackjackUtils::rankToString(Card::Rank rank) {
   if (rank == Card::Rank::Two) return "2";
   if (rank == Card::Rank::Three) return "3";
   if (rank == Card::Rank::Four) return "4";
@@ -36,7 +36,7 @@ std::string rankToString(Card::Rank rank) {
   throw std::invalid_argument("Invalid rank");
 }
 
-Card::Suit stringToSuit(const std::string& str) {
+Card::Suit BlackjackUtils::stringToSuit(const std::string& str) {
   if (str == "H" || str == "h" || str == "Hearts") return Card::Suit::Hearts;
   if (str == "D" || str == "d" || str == "Diamonds")
     return Card::Suit::Diamonds;
@@ -45,7 +45,7 @@ Card::Suit stringToSuit(const std::string& str) {
   throw std::invalid_argument("Invalid suit string");
 }
 
-std::string suitToString(Card::Suit suit) {
+std::string BlackjackUtils::suitToString(Card::Suit suit) {
   if (suit == Card::Suit::Hearts) return "Hearts";
   if (suit == Card::Suit::Diamonds) return "Diamonds";
   if (suit == Card::Suit::Clubs) return "Clubs";
@@ -53,7 +53,8 @@ std::string suitToString(Card::Suit suit) {
   throw std::invalid_argument("Invalid suit");
 }
 
-std::string playerActionToString(BlackjackGame::PlayerAction action) {
+std::string BlackjackUtils::playerActionToString(
+    BlackjackGame::PlayerAction action) {
   if (action == BlackjackGame::PlayerAction::Hit) return "Hit";
   if (action == BlackjackGame::PlayerAction::Stand) return "Stand";
   if (action == BlackjackGame::PlayerAction::Split) return "Split";
@@ -63,7 +64,8 @@ std::string playerActionToString(BlackjackGame::PlayerAction action) {
   throw std::invalid_argument("Invalid player action");
 }
 
-std::string surrenderTypeToString(BlackjackGame::SurrenderType type) {
+std::string BlackjackUtils::surrenderTypeToString(
+    BlackjackGame::SurrenderType type) {
   if (type == BlackjackGame::SurrenderType::Early) return "Early";
   if (type == BlackjackGame::SurrenderType::Late) return "Late";
   if (type == BlackjackGame::SurrenderType::None) return "None";
