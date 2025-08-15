@@ -36,7 +36,7 @@ static void print_ev_help() {
       << "  --can-split-aces <bool>   Can split aces? ('true' or 'false', "
          "default: true).\n"
       << "  --max-splits <num>        Maximum number of splits allowed "
-         "(default: 3).\n";
+         "(default: 3; use 0 for no splitting allowed).\n";
 }
 
 int EVCalculator::run(int argc, char* argv[]) {
@@ -47,6 +47,7 @@ int EVCalculator::run(int argc, char* argv[]) {
 
   std::map<std::string, std::string> args;
 
+  // Parse command-line arguments
   for (int i = 2; i < argc; ++i) {
     std::string arg = argv[i];
     if (arg.rfind("--", 0) == 0) {
@@ -189,6 +190,7 @@ int EVCalculator::run(int argc, char* argv[]) {
   // Parse dealer upcard
   dealerUpcardRank = BlackjackUtils::stringToRank(dealerUpcardStr);
 
+  // Set up the game and calculate EV
   BlackjackGame::GameState state = BlackjackGame::getGameStateForCalculation(
       playerRanks, dealerUpcardRank, numDecks, dealerChecked);
   BlackjackGame::GameRules rules{.numDecks = numDecks,

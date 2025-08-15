@@ -15,13 +15,8 @@
 /bin/
 /build/
 
-# VS Code specific files to ignore
-# Ignore user-specific settings, but keep project-specific configs
-.vscode/*
-!.vscode/tasks.json
-!.vscode/launch.json
-!.vscode/extensions.json
-!.vscode/*.code-snippets
+# VS Code specific files
+.vscode/
 
 # VS Code local history
 .history/
@@ -30,3 +25,6 @@
 # Windows
 Thumbs.db
 Desktop.ini
+
+# Generated .csv files
+*.csv

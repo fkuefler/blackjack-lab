@@ -53,6 +53,24 @@ std::string BlackjackUtils::suitToString(Card::Suit suit) {
   throw std::invalid_argument("Invalid suit");
 }
 
+int BlackjackUtils::stringToValue(const std::string& str) {
+  if (str == "2") return 2;
+  if (str == "3") return 3;
+  if (str == "4") return 4;
+  if (str == "5") return 5;
+  if (str == "6") return 6;
+  if (str == "7") return 7;
+  if (str == "8") return 8;
+  if (str == "9") return 9;
+  if (str == "10" || str == "T" || str == "t") return 10;
+  if (str == "J" || str == "j") return 10;
+  if (str == "Q" || str == "q") return 10;
+  if (str == "K" || str == "k") return 10;
+  if (str == "A" || str == "a")
+    return 11;  // Ace is typically valued as 11 in Blackjack
+  throw std::invalid_argument("Invalid value string");
+}
+
 std::string BlackjackUtils::playerActionToString(
     BlackjackGame::PlayerAction action) {
   if (action == BlackjackGame::PlayerAction::Hit) return "Hit";
