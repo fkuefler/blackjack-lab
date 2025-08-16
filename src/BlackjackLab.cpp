@@ -9,7 +9,7 @@
 
 void print_main_help() {
   std::cout
-      << "Usage: ./bin/BlackjackLab.exe [command] [options]\n"
+      << "Usage: ./BlackjackLab [command] [options]\n"
       << "\nCommands:\n"
       << "  ev-calc         Calculates the expected value of each action for "
          "a specific hand.\n"

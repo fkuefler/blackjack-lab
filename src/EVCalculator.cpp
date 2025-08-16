@@ -14,7 +14,7 @@ static void print_ev_help() {
   std::cout
       << "Mandatory: Input player card ranks and dealer upcard rank.\n"
          "Optional: Input rules or leave blank to use defaults.\n"
-      << "Usage: ./bin/BlackjackLab.exe ev-calc [options]\n"
+      << "Usage: ./BlackjackLab ev-calc [options]\n"
       << "\nOptions:\n"
       << "  --player-cards <cards>    Your starting hand (e.g., '10,10').\n"
       << "  --dealer-upcard <card>    The dealer's visible card (e.g., "

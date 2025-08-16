@@ -11,7 +11,7 @@
 // Helper function to print strategy usage information
 static void print_strategy_help() {
   std::cout
-      << "Usage: ./bin/BlackjackLab.exe strategy [options]\n"
+      << "Usage: ./BlackjackLab strategy [options]\n"
       << "Provide output file name or leave blank to use defaults.\n"
       << "Include specific game rules or leave blank to use defaults.\n"
       << "\nOptions:\n"

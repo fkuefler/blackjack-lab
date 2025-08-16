@@ -1,0 +1,61 @@
+name: Build and Package Release
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Install C++ dependencies (Linux & macOS)
+      if: runner.os != 'Windows'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y build-essential cmake
+        
+    - name: Configure CMake
+      run: cmake -B build
+
+    - name: Build Project
+      run: cmake --build build --config Release
+
+    - name: Package files for release (Windows)
+      if: runner.os == 'Windows'
+      shell: bash
+      run: |
+        mkdir release_package
+        cp build/Release/BlackjackLab.exe release_package/
+        cp chart_generator.py release_package/
+        zip -r blackjack-lab-v1.0.0-windows.zip release_package/
+
+    - name: Package files for release (macOS & Linux)
+      if: runner.os != 'Windows'
+      run: |
+        mkdir release_package
+        cp build/BlackjackLab release_package/
+        cp chart_generator.py release_package/
+        zip -r blackjack-lab-v1.0.0-${{ runner.os }}.zip release_package/
+
+    - name: Upload Release Asset (Windows)
+      if: runner.os == 'Windows'
+      uses: actions/upload-artifact@v4
+      with:
+        name: blackjack-lab-windows
+        path: blackjack-lab-v1.0.0-windows.zip
+        
+    - name: Upload Release Asset (macOS & Linux)
+      if: runner.os != 'Windows'
+      uses: actions/upload-artifact@v4
+      with:
+        name: blackjack-lab-${{ runner.os }}
+        path: blackjack-lab-v1.0.0-${{ runner.os }}.zip
