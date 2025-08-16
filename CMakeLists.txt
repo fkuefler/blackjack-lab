@@ -22,3 +22,6 @@ include_directories(include)
 
 # Add the executable
 add_executable(BlackjackLab ${SOURCE_FILES})
+
+# Set C++20 standard
+target_compile_features(BlackjackLab PRIVATE cxx_std_20)
