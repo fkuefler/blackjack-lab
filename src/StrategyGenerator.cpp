@@ -15,7 +15,7 @@ static void print_strategy_help() {
       << "Provide output file name or leave blank to use defaults.\n"
       << "Include specific game rules or leave blank to use defaults.\n"
       << "\nOptions:\n"
-      << "  --output <filename>       Output CSV file name (default: "
+      << "  --output <filename.csv>       Output CSV file name (default: "
          "strategy.csv).\n"
       << "  --decks <num>             Number of decks in play (default: "
          "6).\n"
@@ -184,9 +184,15 @@ int StrategyGenerator::generate_strategy(const BlackjackGame::GameRules& rules,
           BlackjackUtils::stringToRank(firstCardStr),
           BlackjackUtils::stringToRank(secondCardStr)};
       Card::Rank dealerUpcardRank = BlackjackUtils::stringToRank(dealerUpcard);
+      // Assume dealer has checked for blackjack, unless early surrender is
+      // allowed
+      bool dealerChecked = true;
+      if (rules.surrenderType == BlackjackGame::SurrenderType::Early) {
+        dealerChecked = false;
+      }
       BlackjackGame::GameState state =
           BlackjackGame::getGameStateForCalculation(
-              playerRanks, dealerUpcardRank, rules.numDecks, true);
+              playerRanks, dealerUpcardRank, rules.numDecks, dealerChecked);
       BlackjackGame::EVResult evResult =
           game.calculateEVForOptimalStrategy(state);
       // Convert hard totals to single number if necessary
@@ -241,6 +247,13 @@ int StrategyGenerator::writeToCSV(const std::string& filename,
          << "," << result.expectedValue << "\n";
   }
   file.close();
-  std::cout << "Strategy chart written to " << filename << std::endl;
+  std::cout << "Strategy written to " << filename << "\n";
+  std::cout << "To view the chart, run: python chart_generator.py " << filename
+            << "\n";
+  std::cout << "To save the chart, use --save <custom_filename.png> at the end "
+               "of the command above.\n";
+  std::cout << "Must have python with matplotlib and pandas installed to use."
+            << std::endl;
+
   return 0;
 }
