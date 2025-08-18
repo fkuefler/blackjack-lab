@@ -1,5 +1,9 @@
 #pragma once
+#include <mutex>
+#include <queue>
 #include <string>
+#include <thread>
+#include <tuple>
 #include <vector>
 
 #include "BlackjackGame.h"
@@ -19,8 +23,16 @@ class StrategyGenerator {
 
  private:
   // Generates a strategy based on the given game rules
-  static int generate_strategy(const BlackjackGame::GameRules& rules,
-                               const std::string& outputFileName);
+  static int generateStrategy(const BlackjackGame::GameRules& rules,
+                              const std::string& outputFileName,
+                              int threadCount);
+
+  // Calculates the optimal strategy for a chunk of hands
+  static void calculateChunk(
+      const BlackjackGame::GameRules& rules,
+      std::queue<std::tuple<std::string, std::string, int>>& workQueue,
+      std::vector<StrategyResult>& results, std::mutex& workQueueMutex,
+      std::atomic<int>& tasksCompleted);
 
   // Writes the strategy results to a CSV file
   static int writeToCSV(const std::string& filename,

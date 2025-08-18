@@ -1,10 +1,17 @@
 #include "StrategyGenerator.h"
 
+#include <atomic>
+#include <chrono>
 #include <fstream>
 #include <iostream>
 #include <map>
+#include <mutex>
 #include <numeric>
+#include <queue>
 #include <sstream>
+#include <thread>
+#include <tuple>
+#include <vector>
 
 #include "BlackjackUtils.h"
 
@@ -12,11 +19,8 @@
 static void print_strategy_help() {
   std::cout
       << "Usage: ./BlackjackLab strategy [options]\n"
-      << "Provide output file name or leave blank to use defaults.\n"
-      << "Include specific game rules or leave blank to use defaults.\n"
+      << "Include specific flags or leave blank to use defaults.\n"
       << "\nOptions:\n"
-      << "  --output <filename.csv>       Output CSV file name (default: "
-         "strategy.csv).\n"
       << "  --decks <num>             Number of decks in play (default: "
          "6).\n"
       << "  --s17 <bool>              Does dealer hit on soft 17? ('true' "
@@ -28,7 +32,11 @@ static void print_strategy_help() {
       << "  --can-split-aces <bool>   Can split aces? ('true' or 'false', "
          "default: true).\n"
       << "  --max-splits <num>        Maximum number of splits allowed "
-         "(default: 3; use 0 for no splitting allowed).\n";
+         "(default: 3; use 0 for no splitting allowed).\n"
+      << "  --threads <num>           Number of threads to use (default: "
+         "max (recommended)).\n"
+      << "  --output <filename.csv>   Output CSV file name (default: "
+         "strategy.csv).\n";
 }
 
 int StrategyGenerator::run(int argc, char* argv[]) {
@@ -128,20 +136,40 @@ int StrategyGenerator::run(int argc, char* argv[]) {
                                  .canSplitAces = canSplitAces,
                                  .maxSplits = maxSplits};
 
+  // Parse thread count
+  int threadCount = std::thread::hardware_concurrency();
+  if (args.count("threads")) {
+    if (args["threads"] == "all" || args["threads"] == "max") {
+      threadCount = std::thread::hardware_concurrency();
+    } else {
+      try {
+        threadCount = std::stoi(args["threads"]);
+        if (threadCount < 1) {
+          throw std::out_of_range("Invalid thread count. Must be at least 1.");
+        }
+      } catch (const std::exception& e) {
+        std::cerr << "Error: Invalid value for '--threads'. Must be a positive "
+                     "integer."
+                  << std::endl;
+        return 1;
+      }
+    }
+  }
+
   // Get output file name or use default
   std::string outputFileName = "strategy.csv";
   if (args.find("output") != args.end()) {
     outputFileName = args["output"];
   }
 
-  return generate_strategy(rules, outputFileName);
+  return generateStrategy(rules, outputFileName, threadCount);
 }
 
-int StrategyGenerator::generate_strategy(const BlackjackGame::GameRules& rules,
-                                         const std::string& outputFileName) {
-  std::cout << "Generating strategy chart...\n";
-
-  std::vector<StrategyResult> allResults;
+int StrategyGenerator::generateStrategy(const BlackjackGame::GameRules& rules,
+                                        const std::string& outputFileName,
+                                        int threadCount) {
+  std::cout << "Generating strategy chart using " << threadCount
+            << " threads... (this may take a few minutes)\n";
 
   // Generate all possible player hands (hard totals, soft totals, pairs)
   std::vector<std::string> playerHands;
@@ -169,53 +197,117 @@ int StrategyGenerator::generate_strategy(const BlackjackGame::GameRules& rules,
   std::vector<std::string> dealerUpcards = {"2", "3", "4", "5",  "6",
                                             "7", "8", "9", "10", "A"};
 
-  BlackjackGame game(rules);
-
-  // Iterate through all player hand vs dealer upcard matchups
+  // Create a work queue for the player hands and dealer upcards
+  std::queue<std::tuple<std::string, std::string, int>> workQueue;
+  int taskIndex = 0;
   for (const auto& playerHand : playerHands) {
     for (const auto& dealerUpcard : dealerUpcards) {
-      // Get the player hand cards
-      std::stringstream ss(playerHand);
-      std::string firstCardStr, secondCardStr;
-      std::getline(ss, firstCardStr, ',');
-      std::getline(ss, secondCardStr);
-
-      std::vector<Card::Rank> playerRanks = {
-          BlackjackUtils::stringToRank(firstCardStr),
-          BlackjackUtils::stringToRank(secondCardStr)};
-      Card::Rank dealerUpcardRank = BlackjackUtils::stringToRank(dealerUpcard);
-      // Assume dealer has checked for blackjack, unless early surrender is
-      // allowed
-      bool dealerChecked = true;
-      if (rules.surrenderType == BlackjackGame::SurrenderType::Early) {
-        dealerChecked = false;
-      }
-      BlackjackGame::GameState state =
-          BlackjackGame::getGameStateForCalculation(
-              playerRanks, dealerUpcardRank, rules.numDecks, dealerChecked);
-      BlackjackGame::EVResult evResult =
-          game.calculateEVForOptimalStrategy(state);
-      // Convert hard totals to single number if necessary
-      std::string playerHandTotalString;
-      if (firstCardStr != secondCardStr && firstCardStr != "A" &&
-          secondCardStr != "A") {
-        playerHandTotalString =
-            std::to_string(BlackjackUtils::stringToValue(firstCardStr) +
-                           BlackjackUtils::stringToValue(secondCardStr));
-      } else {
-        playerHandTotalString = playerHand;
-      }
-      // Create a StrategyResult for this matchup
-      StrategyResult result = {.playerHand = playerHandTotalString,
-                               .dealerUpcard = dealerUpcard,
-                               .optimalAction = evResult.optimalAction,
-                               .expectedValue = evResult.optimalEV};
-      allResults.push_back(result);
+      workQueue.push({playerHand, dealerUpcard, taskIndex++});
     }
-    std::cout << "Finished " << playerHand << std::endl;
   }
+
+  // Protect the work queue with a mutex
+  std::mutex workQueueMutex;
+  std::atomic<int> tasksCompleted = 0;
+  const int totalTasks = workQueue.size();
+  // Initialize the results vector with a size equal to the total task count
+  std::vector<StrategyResult> allResults(totalTasks);
+
+  std::vector<std::thread> threads;
+
+  // Create worker threads
+  for (int i = 0; i < threadCount; ++i) {
+    threads.emplace_back([&] {
+      calculateChunk(rules, workQueue, allResults, workQueueMutex,
+                     tasksCompleted);
+    });
+  }
+
+  // Print a progress meter as the program runs
+  while (tasksCompleted < totalTasks) {
+    int currentProgress = static_cast<int>((tasksCompleted * 100) / totalTasks);
+    std::cout << "\rProgress: " << currentProgress << "%" << std::flush;
+    std::this_thread::sleep_for(std::chrono::milliseconds(1000));
+  }
+  std::cout << "\rProgress: 100%\n";
+
+  // Join all threads
+  for (auto& t : threads) {
+    if (t.joinable()) {
+      t.join();
+    }
+  }
+
   // Write the results to a CSV file
   return writeToCSV(outputFileName, allResults, rules);
+}
+
+void StrategyGenerator::calculateChunk(
+    const BlackjackGame::GameRules& rules,
+    std::queue<std::tuple<std::string, std::string, int>>& workQueue,
+    std::vector<StrategyResult>& results, std::mutex& workQueueMutex,
+    std::atomic<int>& tasksCompleted) {
+  BlackjackGame game(rules);
+
+  // Process each task in the work queue
+  while (true) {
+    std::tuple<std::string, std::string, int> task;
+    {
+      std::lock_guard<std::mutex> lock(workQueueMutex);
+      if (workQueue.empty()) {
+        break;  // No more work to do
+      }
+      task = workQueue.front();
+      workQueue.pop();
+    }
+
+    // Extract the player hand, dealer upcard, and task index from the tuple
+    std::string playerHand = std::get<0>(task);
+    std::string dealerUpcard = std::get<1>(task);
+    int taskIndex = std::get<2>(task);
+
+    game.clearMemos();
+
+    // Parse the player hand
+    std::stringstream ss(playerHand);
+    std::string firstCardStr, secondCardStr;
+    std::getline(ss, firstCardStr, ',');
+    std::getline(ss, secondCardStr);
+
+    // Determine the ranks of the player hand and dealer upcard
+    std::vector<Card::Rank> playerRanks = {
+        BlackjackUtils::stringToRank(firstCardStr),
+        BlackjackUtils::stringToRank(secondCardStr)};
+    Card::Rank dealerUpcardRank = BlackjackUtils::stringToRank(dealerUpcard);
+
+    // Assume dealer has checked for blackjack, unless early surrender is
+    // allowed
+    bool dealerChecked = true;
+    if (rules.surrenderType == BlackjackGame::SurrenderType::Early) {
+      dealerChecked = false;
+    }
+
+    BlackjackGame::GameState state = BlackjackGame::getGameStateForCalculation(
+        playerRanks, dealerUpcardRank, rules.numDecks, dealerChecked);
+    BlackjackGame::EVResult evResult =
+        game.calculateEVForOptimalStrategy(state);
+    // Convert hard totals to single number if necessary
+    std::string playerHandTotalString = playerHand;
+    if (firstCardStr != secondCardStr && firstCardStr != "A" &&
+        secondCardStr != "A") {
+      playerHandTotalString =
+          std::to_string(BlackjackUtils::stringToValue(firstCardStr) +
+                         BlackjackUtils::stringToValue(secondCardStr));
+    }
+    // Create a StrategyResult for this matchup
+    StrategyResult result = {.playerHand = playerHandTotalString,
+                             .dealerUpcard = dealerUpcard,
+                             .optimalAction = evResult.optimalAction,
+                             .expectedValue = evResult.optimalEV};
+
+    results[taskIndex] = result;
+    tasksCompleted++;
+  }
 }
 
 int StrategyGenerator::writeToCSV(const std::string& filename,
